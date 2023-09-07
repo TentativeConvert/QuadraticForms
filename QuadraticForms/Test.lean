@@ -36,9 +36,11 @@ instance VecSpacesUptoEquiv : Setoid ( FinDimVecSpaces K) where
     trans := sorry --fun hx hy => hx.trans hy
   }
 
+lemma vecspace_equiv_iff (V W : FinDimVecSpaces K) : V ≈ W ↔ Nonempty (V.carrier ≃ₗ[K] W.carrier) := Iff.rfl
+
 def MyNat := Quotient (VecSpacesUptoEquiv K)
 
-def MyKn (n : ℕ) : FinDimVecSpaces K := ⟨(Fin n → K), by exact Pi.addCommGroup, by exact Pi.module (Fin n) (fun _ => K) K, by exact
+def MyKn (n : ℕ) : FinDimVecSpaces K := ⟨(Fin n → K), Pi.addCommGroup, Pi.module (Fin n) (fun _ => K) K, by exact
   Module.Finite.pi ⟩
 
 #check MyKn
@@ -55,14 +57,17 @@ def F : ℕ → MyNat K := λ n ↦  ⟦MyKn K n⟧
 noncomputable def G : MyNat K → ℕ := Quotient.lift (fun V ↦ FiniteDimensional.finrank K V.carrier)
   (fun V W ↦ by sorry  )
 
+set_option pp.proofs.withType false
+
 example (C : MyNat K) : F K (G K C) = C := by
   simp only [F, G] 
-  rw [←Quotient.out_eq C, Quotient.lift_mk, Quotient.out_eq C, Quotient.mk_eq_iff_out]
-  generalize Quotient.out C  = V
-  apply Nonempty.intro
-  refine LinearEquiv.ofRankEq (Fin (finrank K V.carrier) → K) V.carrier ?_
-  have := V.isFinDim
-  simp
+  rw [←Quotient.out_eq C,
+    Quotient.lift_mk,
+    Quotient.out_eq C,
+    Quotient.mk_eq_iff_out,
+    vecspace_equiv_iff]
+  apply nonempty_linearEquiv_of_rank_eq
+  simp [MyKn]
   done
 
 def example_qf : QuadraticForm K (Fin m → K) where
