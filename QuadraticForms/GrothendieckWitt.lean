@@ -31,7 +31,7 @@ abbrev QuadSpaceCatMax.{v₁, v₂, u₁} (K : Type u₁) [Field K] := QuadSpace
 namespace QuadSpaceCat
 
 def of_form {V : Type v} [AddCommGroup V]
-  [Module K V] [FiniteDimensional K V] (Q : QuadraticForm K V) : QuadSpaceCat K:= ⟨V, Q⟩
+  [Module K V] [FiniteDimensional K V] (Q : QuadraticForm K V) : QuadSpaceCat K := ⟨V, Q⟩
 
 -- instance : CoeSort (QuadSpaceCat.{v} K) (Type v) :=
 --  ⟨QuadSpaceCat.carrier⟩
@@ -49,19 +49,42 @@ instance QuadFormsEquiv : Setoid ( QuadSpaceCat K) where
     trans := λ hx hy ↦ hx.trans hy
   }
 
+lemma quadform_equiv_iff (Q₁ Q₂ : QuadSpaceCat K) : Q₁ ≈ Q₂ ↔ QuadraticForm.Equivalent Q₁.form Q₂.form := Iff.rfl
+
 def GW := Quotient (QuadFormsEquiv K)
 
 noncomputable def out_form (Q : GW K) := (Quotient.out Q).form
 
-noncomputable def add : GW K → GW K → GW K := λ Q₁ Q₂ ↦
-Quotient.mk _ ⟨_, QuadraticForm.prod Q₁.out.form Q₂.out.form⟩
-noncomputable def mul : GW K → GW K → GW K := λ Q₁ Q₂ ↦
-Quotient.mk _ ⟨_, QuadraticForm.tmul Q₁.out.form Q₂.out.form⟩
+noncomputable def add' : QuadSpaceCat K → QuadSpaceCat K → QuadSpaceCat K :=
+  λ Q₁ Q₂ ↦ ⟨_, QuadraticForm.prod Q₁.form Q₂.form⟩
 
+noncomputable def add : GW K → GW K → GW K :=
+  Quotient.map₂ (add' K) (λ _ _ hV _ _ hW ↦ QuadraticForm.Equivalent.prod hV hW)
+  
+noncomputable def mul' : QuadSpaceCat K → QuadSpaceCat K → QuadSpaceCat K :=
+  λ Q₁ Q₂ ↦ ⟨_, QuadraticForm.tmul Q₁.form Q₂.form⟩
+
+noncomputable def mul : GW K → GW K → GW K :=
+  Quotient.map₂ (mul' K) (λ V₁ V₂ hV W₁ W₂ hW ↦ by
+    simp at *
+    sorry
+    done
+  )
+
+def zero : GW K := ⟦ ⟨_, (0 : QuadraticForm K (Fin 0 → K))⟩ ⟧
+
+def one' : QuadraticForm K (Fin 1 →K) := by
+  refine QuadraticForm.ofPolar (λ f ↦ f 0 * f 0) (λ a f ↦ by simp [mul_mul_mul_comm])
+    (?_) ?polar_smul_left <;>
+  · intro f g h
+    dsimp [QuadraticForm.polar]
+    ring
+
+noncomputable def one : GW K := ⟦ ⟨_, (one' K : QuadraticForm K (Fin 1 → K))⟩ ⟧
 noncomputable instance GWMonoid : CommSemiring (GW K) where
   add := add K
   add_assoc := sorry
-  zero := sorry
+  zero := zero K
   zero_add := sorry
   add_zero := sorry
   add_comm := sorry
