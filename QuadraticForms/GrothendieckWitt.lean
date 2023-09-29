@@ -46,7 +46,7 @@ instance QuadFormsEquiv : Setoid ( QuadSpaceCat K) where
   iseqv := {
     refl := by tauto
     symm := by tauto
-    trans := λ hx hy ↦ hx.trans hy
+    trans := fun hx hy ↦ hx.trans hy
   }
 
 lemma quadform_equiv_iff (Q₁ Q₂ : QuadSpaceCat K) : Q₁ ≈ Q₂ ↔ QuadraticForm.Equivalent Q₁.form Q₂.form := Iff.rfl
