@@ -15,22 +15,24 @@ open FiniteDimensional
 open Set
 
 
-structure fdVecSpaces (K : Type) [Field K] where
+structure FdVecSpace (K : Type) [Field K] where
   carrier : Type
-  isAddCommGroup : AddCommGroup carrier
-  isModule : Module K carrier
-  isfd : FiniteDimensional K carrier
+  [isAddCommGroup : AddCommGroup carrier]
+  [isModule : Module K carrier]
+  [isfd : FiniteDimensional K carrier]
 
-attribute [instance] fdVecSpaces.isAddCommGroup fdVecSpaces.isModule fdVecSpaces.isfd
+attribute [instance] FdVecSpace.isAddCommGroup FdVecSpace.isModule FdVecSpace.isfd
 
-def MyKn (n : ℕ) : fdVecSpaces K := ⟨(Fin n → K), by exact Pi.addCommGroup, by exact Pi.module (Fin n) (fun _ => K) K, by exact
-  Module.Finite.pi ⟩
+instance : AddCommGroup (Fin n → K) := Pi.addCommGroup
+instance : Module K (Fin n → K) := Pi.module (Fin n) (fun _ => K) K
+instance : FiniteDimensional K (Fin n → K) := Module.Finite.pi
+def stdVecSpace (n : ℕ) : FdVecSpace K := ⟨(Fin n → K)⟩
 
---#check MyKn
---example : fdVecSpaces K := MyKn K 3
---example : fdVecSpaces K := MyKn K 3
+#check stdVecSpace
+example : FdVecSpace K := stdVecSpace K 3
 
-instance VecSpacesUptoEquiv : Setoid (fdVecSpaces K) where
+
+instance VecSpacesUptoEquiv : Setoid (FdVecSpace K) where
   r := λ V W ↦  Nonempty (V.carrier ≃ₗ[K] W.carrier)
   iseqv := {
     refl := by 
@@ -53,7 +55,7 @@ instance VecSpacesUptoEquiv : Setoid (fdVecSpaces K) where
 
 --#check VecSpacesUptoEquiv K
 
-lemma vec_spaces_equiv_iff (V W : fdVecSpaces K) : V ≈ W ↔ Nonempty (V.carrier ≃ₗ[K] W.carrier) := by rfl 
+lemma vec_spaces_equiv_iff (V W : FdVecSpace K) : V ≈ W ↔ Nonempty (V.carrier ≃ₗ[K] W.carrier) := by rfl 
 
 -- the following lemma should be removed since its proved by a single other lemma
 lemma eq_rank_of_iso (V W : Type) 
@@ -72,24 +74,24 @@ def isoVec := Quotient (VecSpacesUptoEquiv K)
 noncomputable def rank' : isoVec K → ℕ := Quotient.lift (fun V ↦ FiniteDimensional.finrank K V.carrier) (fun V W ↦ eq_rank_of_iso K V.carrier W.carrier)
   
 -- the following lemma is not used explicitly anywhere
-lemma rank'_lifts_finrank : ∀ (V : fdVecSpaces K), rank' K ⟦V⟧ = (FiniteDimensional.finrank K V.carrier) := by
+lemma rank'_lifts_finrank : ∀ (V : FdVecSpace K), rank' K ⟦V⟧ = (FiniteDimensional.finrank K V.carrier) := by
     intro V
     rfl
 
 theorem rank'_is_bijection : Function.Bijective (rank' K) := by
   apply Function.bijective_iff_has_inverse.2
-  let F : ℕ → isoVec K := fun n ↦ ⟦ MyKn K n ⟧
+  let F : ℕ → isoVec K := fun n ↦ ⟦ stdVecSpace K n ⟧
   use F
   constructor
   · apply Quotient.ind
     intro V
     apply Quotient.sound
-    rw [rank', MyKn,vec_spaces_equiv_iff]
+    rw [rank', stdVecSpace, vec_spaces_equiv_iff]
     apply nonempty_linearEquiv_of_rank_eq
     simp
     done
   · intro n
-    simp [MyKn,rank'] 
+    simp [stdVecSpace,rank'] 
   done
 
 -----------------------------------------------------------------------------
